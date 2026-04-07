@@ -84,6 +84,20 @@ local function cleanEmptyTables(t)
 	return next(t) and t or nil
 end
 
+local function clamp_mux_concurrency(value, max)
+	local n = tonumber(value)
+	if n == nil then
+		return nil
+	end
+	if n < -1 then
+		return -1
+	end
+	if n > max then
+		return max
+	end
+	return n
+end
+
 -- 确保正确判断程序是否存在
 local function is_finded(e)
 	return luci.sys.exec(string.format('type -t -p "%s" 2>/dev/null', e)) ~= ""
@@ -108,6 +122,9 @@ if xray_version and xray_version ~= "" then
 
 	xray_version_val = major * 10000 + minor * 100 + patch
 end
+
+local mux_concurrency = clamp_mux_concurrency(server.concurrency, 128)
+local mux_xudp_concurrency = clamp_mux_concurrency(server.xudpConcurrency, 1024)
 
 function vmess_vless()
 	outbound_settings = {
@@ -612,8 +629,8 @@ end
 			mux = (server.v2ray_protocol ~= "hysteria2" and server.v2ray_protocol ~= "wireguard") and {
 				-- mux
 				enabled = (server.mux == "1"), -- Mux
-				concurrency = (server.mux == "1" and (tonumber(server.concurrency) or -1)) or nil, -- TCP 最大并发连接数
-				xudpConcurrency = (server.mux == "1" and (tonumber(server.xudpConcurrency) or 16)) or nil, -- UDP 最大并发连接数
+				concurrency = (server.mux == "1" and (mux_concurrency or -1)) or nil, -- TCP 最大并发连接数
+				xudpConcurrency = (server.mux == "1" and (mux_xudp_concurrency or 16)) or nil, -- UDP 最大并发连接数
 				xudpProxyUDP443 = (server.mux == "1" and (server.xudpProxyUDP443 or "reject")) or nil -- 对被代理的 UDP/443 流量处理方式
 			} or nil
 		}
