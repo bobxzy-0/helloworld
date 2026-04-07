@@ -1657,11 +1657,6 @@ boot() {
 	start
 }
 
-reload() {
-	stop
-	start
-}
-
 stop() {
 	unlock
 	set_lock
