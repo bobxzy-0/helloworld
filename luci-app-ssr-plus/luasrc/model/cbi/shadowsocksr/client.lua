@@ -293,5 +293,9 @@ if is_finded("chinadns-ng") then
 	end
 end
 
+function m.on_after_save(self)
+	luci.sys.call("/etc/init.d/shadowsocksr restart >/dev/null 2>&1 &")
+end
+
 return m
 
