@@ -84,6 +84,11 @@ local function cleanEmptyTables(t)
 	return next(t) and t or nil
 end
 
+-- Mux 并发值归一化：
+-- nil: 无效输入（调用方决定默认值）
+-- -1 : 保留“禁用 Mux 承载”的语义
+--  0 : 保留上游“自动/默认行为”的语义
+-- >0 : 限制在给定上限内，避免异常大值造成连接/内存压力
 local function clamp_mux_concurrency(value, max)
 	local n = tonumber(value)
 	if n == nil then
@@ -122,9 +127,6 @@ if xray_version and xray_version ~= "" then
 
 	xray_version_val = major * 10000 + minor * 100 + patch
 end
-
-local mux_concurrency = clamp_mux_concurrency(server.concurrency, 128)
-local mux_xudp_concurrency = clamp_mux_concurrency(server.xudpConcurrency, 1024)
 
 function vmess_vless()
 	outbound_settings = {
@@ -264,6 +266,8 @@ function outbound:handleIndex(index)
 end
 local settings = outbound:new()
 settings:handleIndex(server.v2ray_protocol)
+local mux_concurrency = clamp_mux_concurrency(server.concurrency, 128)
+local mux_xudp_concurrency = clamp_mux_concurrency(server.xudpConcurrency, 1024)
 local Xray = {
 	log = {
 		-- error = "/var/ssrplus.log",
